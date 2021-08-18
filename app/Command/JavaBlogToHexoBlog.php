@@ -58,14 +58,20 @@ class JavaBlogToHexoBlog extends HyperfCommand
                         $articleFile = fopen($this->path . $article->title . '.md', "w");
 
                         $type = $article->type->name ?? '未分类';
-                        $tags = $article->tags->pluck('name')->toArray();
+
+                        $tags = '';
+                        foreach ($article->tags->pluck('name')->toArray() as $value) {
+                            $tags .= "'" . $value . "'" . ',';
+                        }
+
+                        $tags = rtrim($tags, ',');
 
                         //定义标题
                         $title = "---
 title: $article->title
 date: $article->create_time
 categories: ['$type']
-tags: $tags
+tags: [$tags]
 cover: $article->cover_image
 ---
 
