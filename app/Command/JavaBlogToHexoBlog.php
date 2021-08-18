@@ -24,7 +24,7 @@ class JavaBlogToHexoBlog extends HyperfCommand
      *
      * @var string
      */
-    protected $path = '/Users/liang/web/hexo-fanerblog/';
+    protected $path = '/Users/liang/www/fanerblog-tool/markdown/';
 
     /**
      * JavaBlogToHexoBlog constructor.
@@ -50,28 +50,35 @@ class JavaBlogToHexoBlog extends HyperfCommand
 
     public function handle()
     {
-        $article = Article::query()->first();
+        Article::query()
+            ->orderBy('create_time')
+            ->chunkById(20, function ($articles) {
+                foreach ($articles as $article) {
+                    try {
+                        $articleFile = fopen($this->path . $article->title . '.md', "w");
 
-        try {
-            $articleFile = fopen($this->path . $article->title . '.md', "w");
+                        $type = $article->type->name ?? '未分类';
+                        $tags = $article->tags->pluck('name')->toArray();
 
-            //定义标题
-            $title = "---
+                        //定义标题
+                        $title = "---
 title: $article->title
 date: $article->create_time
-categories: ['php']
-tags: ['hello-world', 'blog']
+categories: ['$type']
+tags: $tags
 cover: $article->cover_image
 ---
 
 ";
-            //写入标题
-            fwrite($articleFile, $title);
-            //写入markdown内容
-            fwrite($articleFile, $article->content_md);
-            fclose($articleFile);
-        } catch (\Exception $exception) {
-            $this->error('写入md文件失败，原因是：' . $exception->getMessage());
-        }
+                        //写入标题
+                        fwrite($articleFile, $title);
+                        //写入markdown内容
+                        fwrite($articleFile, $article->content_md);
+                        fclose($articleFile);
+                    } catch (\Exception $exception) {
+                        $this->error('写入md文件失败，原因是：' . $exception->getMessage());
+                    }
+                }
+            });
     }
 }
